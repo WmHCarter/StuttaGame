@@ -39,6 +39,8 @@ AStuttaGameCharacter::AStuttaGameCharacter(const class FPostConstructInitializeP
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+	currentDirection = EDirection::Neutral;
+	characterState = ECharacterState::NotAttacking;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -47,28 +49,106 @@ AStuttaGameCharacter::AStuttaGameCharacter(const class FPostConstructInitializeP
 void AStuttaGameCharacter::SetupPlayerInputComponent(class UInputComponent* InputComponent)
 {
 	// set up gameplay key bindings
-	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	InputComponent->BindAxis("MoveRight", this, &AStuttaGameCharacter::MoveRight);
 
 	InputComponent->BindTouch(IE_Pressed, this, &AStuttaGameCharacter::TouchStarted);
-	InputComponent->BindTouch(IE_Released, this, &AStuttaGameCharacter::TouchStopped);
 }
 
 void AStuttaGameCharacter::MoveRight(float Value)
 {
-	// add movement in that direction
-	AddMovementInput(FVector(0.f,-1.f,0.f), Value);
+	if (Value != 0)
+	{
+		previousDirection = currentDirection;
+		if (Value == 1.f)
+		{
+			currentDirection = EDirection::Right;
+		}
+		else if (Value == -1.f)
+		{
+			currentDirection = EDirection::Left;
+		}
+
+		if (previousDirection != currentDirection)
+		{
+			if (characterState == ECharacterState::NotAttacking)
+			{
+				characterState = ECharacterState::TurnToAttack;
+			}
+			else if (characterState == ECharacterState::Attacking)
+			{
+				characterState = ECharacterState::TurnToMove;
+			}
+		}
+
+		if (previousDirection == currentDirection)
+		{
+			if (characterState == ECharacterState::Attacking)
+			{
+				characterState = ECharacterState::TurnToMove;
+			}
+		}
+	}
 }
 
 void AStuttaGameCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
-	// jump on any touch
-	Jump();
+
 }
 
-void AStuttaGameCharacter::TouchStopped(const ETouchIndex::Type FingerIndex, const FVector Location)
+void AStuttaGameCharacter::Tick(float DeltaSeconds)
 {
-	StopJumping();
+	Super::Tick(DeltaSeconds);
+
+	// If character is turning to attack, rotate character
+	if (characterState == ECharacterState::TurnToAttack)
+	{
+		if (currentDirection == EDirection::Left)
+		{
+			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, 90, 15), 0));
+		}
+		else if (currentDirection == EDirection::Right)
+		{
+			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, -90, -15), 0));
+		}
+
+		if (GetActorRotation().Yaw >= 89.9f || GetActorRotation().Yaw <= -89.9f)
+		{
+			characterState = ECharacterState::Attacking;
+		}
+	}
+
+	// If character is turning to move, rotate character
+	if (characterState == ECharacterState::TurnToMove)
+	{
+		if (currentDirection == EDirection::Left)
+		{
+			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, 90, 90), 0));
+		}
+		else if (currentDirection == EDirection::Right)
+		{
+			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, -90, -90), 0));
+		}
+
+		if (GetActorRotation().Yaw >= 89.9f || GetActorRotation().Yaw <= -89.9f)
+		{
+			characterState = ECharacterState::NotAttacking;
+		}
+	}
+
+	if (currentDirection != EDirection::Neutral)
+	{
+		if (characterState == ECharacterState::Attacking)
+		{
+			//Stand still and start attacking
+		}
+
+		if (characterState == ECharacterState::NotAttacking)
+		{
+			if (currentDirection == EDirection::Left)
+				AddMovementInput(FVector(0.f, -1.f, 0.f), -1.f);
+			if (currentDirection == EDirection::Right)
+				AddMovementInput(FVector(0.f, -1.f, 0.f), 1.f);
+		}
+	}
 }
 

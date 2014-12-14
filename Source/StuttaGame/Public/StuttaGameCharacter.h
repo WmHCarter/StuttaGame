@@ -1,6 +1,8 @@
 // Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 #pragma once
+
 #include "GameFramework/Character.h"
+#include "StuttaGameEnums.h"
 #include "StuttaGameCharacter.generated.h"
 
 UCLASS(config=Game)
@@ -16,7 +18,16 @@ class AStuttaGameCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	TSubobjectPtr<class USpringArmComponent> CameraBoom;
 
+	EDirection currentDirection;
+	EDirection previousDirection;
+
+	/** Is the character attacking */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CharacterState)
+	ECharacterState characterState;
+
 protected:
+
+	virtual void Tick(float DeltaSeconds) OVERRIDE;
 
 	/** Called for side to side input */
 	void MoveRight(float Val);
@@ -24,11 +35,9 @@ protected:
 	/** Handle touch inputs. */
 	void TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location);
 
-	/** Handle touch stop event. */
-	void TouchStopped(const ETouchIndex::Type FingerIndex, const FVector Location);
-
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
 
 };
+

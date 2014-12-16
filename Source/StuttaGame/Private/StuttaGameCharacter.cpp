@@ -37,6 +37,14 @@ AStuttaGameCharacter::AStuttaGameCharacter(const class FPostConstructInitializeP
 	CharacterMovement->MaxWalkSpeed = 600.f;
 	CharacterMovement->MaxFlySpeed = 600.f;
 
+	// Set default turn times and attack times
+	baseWindupTime = 1.0f;
+	windupReduction = 0.0f;
+	baseWinddownTime = .25f;
+	winddownReduction = 0.0f;
+	baseAttackSpeed = 1.0f;
+	bonusAttackSpeed = 0.0f;
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 	currentDirection = EDirection::Neutral;
@@ -99,16 +107,18 @@ void AStuttaGameCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// If character is turning to attack, rotate character
+	// If character is turning to attack, rotate character based on wind up time
+	// Degrees in time to turn since last tick = Windup time * DeltaSeconds * 180 Degrees;
 	if (characterState == ECharacterState::TurnToAttack)
 	{
+		float degreesToTurn = (1 / (baseWindupTime - (baseWindupTime * windupReduction)) * 180) * DeltaSeconds;
 		if (currentDirection == EDirection::Left)
 		{
-			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, 90, 15), 0));
+			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, 90, degreesToTurn), 0));
 		}
 		else if (currentDirection == EDirection::Right)
 		{
-			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, -90, -15), 0));
+			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, -90, -degreesToTurn), 0));
 		}
 
 		if (GetActorRotation().Yaw >= 89.9f || GetActorRotation().Yaw <= -89.9f)
@@ -117,16 +127,17 @@ void AStuttaGameCharacter::Tick(float DeltaSeconds)
 		}
 	}
 
-	// If character is turning to move, rotate character
+	// If character is turning to move, rotate character based on wind down time
 	if (characterState == ECharacterState::TurnToMove)
 	{
+		float degreesToTurn = (1 / (baseWinddownTime - (baseWinddownTime * winddownReduction)) * 180 ) * DeltaSeconds;
 		if (currentDirection == EDirection::Left)
 		{
-			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, 90, 90), 0));
+			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, 90, degreesToTurn), 0));
 		}
 		else if (currentDirection == EDirection::Right)
 		{
-			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, -90, -90), 0));
+			SetActorRotation(FRotator(0, FMath::FixedTurn(GetActorRotation().Yaw, -90, -degreesToTurn), 0));
 		}
 
 		if (GetActorRotation().Yaw >= 89.9f || GetActorRotation().Yaw <= -89.9f)

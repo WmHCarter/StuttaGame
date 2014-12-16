@@ -25,6 +25,30 @@ class AStuttaGameCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CharacterState)
 	ECharacterState characterState;
 
+	/** Time that the character takes to turn to attack */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = CharacterState)
+	float baseWindupTime;
+
+	/** Time that the character takes to turn to attack */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = CharacterState)
+	float windupReduction;
+
+	/** Time that the character takes to turn to flee */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = CharacterState)
+	float baseWinddownTime;
+
+	/** Time that the character takes to turn to flee */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = CharacterState)
+	float winddownReduction;
+
+	/** Number of attacks per second */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = CharacterState)
+	float baseAttackSpeed;
+
+	/** Number of attacks per second */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = CharacterState)
+	float bonusAttackSpeed;
+
 protected:
 
 	virtual void Tick(float DeltaSeconds) OVERRIDE;
